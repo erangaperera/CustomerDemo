@@ -1,0 +1,59 @@
+<data name="ExchangeRateDataService" serviceNamespace="com.samples.exchangerate" transports="http https local">
+    <config id="default">
+        <property name="driverClassName">com.mysql.jdbc.Driver</property>
+        <property name="url">jdbc:mysql://localhost/exchangeratedb</property>
+        <property name="username">root</property>
+    </config>
+    <query id="select_current_exchange_rate" useConfig="default">
+        <sql>select * from ExchangeRate where FromCurrency = ? and ToCurrency = ? and EffectiveDateTime &lt;= CURRENT_TIMESTAMP ORDER BY EffectiveDateTime DESClimit 1;</sql>
+        <result element="ExchangeRates" rowName="ExchangeRate">
+            <element column="Rate" name="Rate" xsdType="decimal"/>
+        </result>
+        <param name="FromCurrency" paramType="SCALAR" sqlType="STRING" type="IN"/>
+        <param name="ToCurrency" paramType="SCALAR" sqlType="STRING" type="IN"/>
+    </query>
+    <query id="insert_exchange_rate" useConfig="default">
+        <sql>INSERT INTO ExchangeRate (FromCurrency, ToCurrency, Rate, EffectiveDateTime, CreatedDate)VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP);</sql>
+        <param name="FromCurrency" sqlType="STRING"/>
+        <param name="ToCurrency" sqlType="STRING"/>
+        <param name="Rate" sqlType="NUMERIC"/>
+        <param name="EffectiveDateTime" sqlType="TIMESTAMP"/>
+    </query>
+    <query id="select_average_rate" useConfig="default">
+        <sql>SELECT AVG(Rates.Rate) as Rate FROM (SELECT Rate   FROM ExchangeRate   WHERE EffectiveDateTime &lt;= CURRENT_TIMESTAMP AND         FromCurrency = ? AND        ToCurrency = ?   ORDER BY EffectiveDateTime  DESC   LIMIT 5) Rates;</sql>
+        <result element="AverageRates" rowName="AverageRate">
+            <element column="Rate" name="Rate" xsdType="decimal"/>
+        </result>
+        <param name="FromCurrency" sqlType="STRING"/>
+        <param name="ToCurrency" sqlType="STRING"/>
+    </query>
+    <operation name="getCurrentExchangeRate">
+      Gets current exchange rate                                    
+      <call-query href="select_current_exchange_rate">
+            <with-param name="FromCurrency" query-param="FromCurrency"/>
+            <with-param name="ToCurrency" query-param="ToCurrency"/>
+        </call-query>
+    </operation>
+    <operation returnRequestStatus="true" name="InsertExchangeRate">
+       Inserts Exchange rate                                    
+      <call-query href="insert_exchange_rate">
+            <with-param name="FromCurrency" query-param="FromCurrency"/>
+            <with-param name="ToCurrency" query-param="ToCurrency"/>
+            <with-param name="Rate" query-param="Rate"/>
+            <with-param name="EffectiveDateTime" query-param="EffectiveDateTime"/>
+        </call-query>
+    </operation>
+    <operation name="getAverageExchangeRate">
+      Get Average exchange of last 5 effective rates                                    
+      <call-query href="select_average_rate">
+            <with-param name="FromCurrency" query-param="FromCurrency"/>
+            <with-param name="ToCurrency" query-param="ToCurrency"/>
+        </call-query>
+    </operation>
+    <resource method="GET" path="/GetExchangeRate/{FromCurrency}/{ToCurrency}">
+        <call-query href="select_current_exchange_rate">
+            <with-param name="FromCurrency" query-param="FromCurrency"/>
+            <with-param name="ToCurrency" query-param="ToCurrency"/>
+        </call-query>
+    </resource>
+</data>
