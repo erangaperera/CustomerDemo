@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ws.apache.org/ns/synapse"
+     name="GetExchngRate"
+     context="/GetExchngRate">
+   <resource methods="GET" uri-template="/{FromCur}/{ToCur}">
+      <inSequence>
+         <payloadFactory media-type="xml">
+            <format>
+               <exc:getEchangeRate xmlns:exc="http://exchngrate.sample.wso2.org/">
+                  <FromCurrency xmlns="">$1</FromCurrency>
+                  <ToCurrency xmlns="">$2</ToCurrency>
+               </exc:getEchangeRate>
+            </format>
+            <args>
+               <arg evaluator="xml" expression="get-property('uri.var.FromCur')"/>
+               <arg evaluator="xml" expression="get-property('uri.var.ToCur')"/>
+            </args>
+         </payloadFactory>
+         <send>
+            <endpoint>
+               <address uri="http://localhost:9767/ExchangeRateService-1.0.0/services/exchange_rate"
+                        format="soap11"/>
+            </endpoint>
+         </send>
+      </inSequence>
+      <outSequence>
+         <send/>
+      </outSequence>
+      <faultSequence/>
+   </resource>
+</api>
